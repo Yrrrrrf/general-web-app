@@ -1,0 +1,44 @@
+version: '3.8'
+
+services:
+  api:
+    build:
+      context: ./backend/api  # Adjust this path if your API Dockerfile is in a different location
+      dockerfile: api.Dockerfile
+    ports:
+      - "8000:8000"  # Map host port 8000 to container port 8000
+    environment:
+      - DB_NAME=${POSTGRES_DB}
+      - DB_HOST=pharma-hub-db  # This must match the name of the database service
+      - DB_OWNER_ADMIN=${POSTGRES_USER}
+      - DB_OWNER_PWORD=${POSTGRES_PASSWORD}
+    depends_on:
+      - db
+    networks:
+      - pharma-net
+
+  db:
+    build:
+      context: ./backend/db  # Adjust this path if your DB Dockerfile is in a different location
+      dockerfile: db.Dockerfile
+    container_name: pharma-hub-db
+    volumes:
+      - pharma-dt:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_DB=${POSTGRES_DB}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+    ports:
+      - "5432:5432"  # Map host port 5432 to container port 5432
+    networks:
+      - pharma-net
+
+networks:
+  pharma-net:
+    name: pharma-net
+
+
+# * Uncomment the following section if you want to persist the database data
+volumes:
+  pharma-dt:
+    name: pharma-dt
