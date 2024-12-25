@@ -1,44 +1,61 @@
-version: '3.8'
+version: '3.9'
 
 services:
-  api:
+  gwa-db:
     build:
-      context: ./backend/api  # Adjust this path if your API Dockerfile is in a different location
-      dockerfile: api.Dockerfile
-    ports:
-      - "8000:8000"  # Map host port 8000 to container port 8000
-    environment:
-      - DB_NAME=${POSTGRES_DB}
-      - DB_HOST=pharma-hub-db  # This must match the name of the database service
-      - DB_OWNER_ADMIN=${POSTGRES_USER}
-      - DB_OWNER_PWORD=${POSTGRES_PASSWORD}
-    depends_on:
-      - db
-    networks:
-      - pharma-net
-
-  db:
-    build:
-      context: ./backend/db  # Adjust this path if your DB Dockerfile is in a different location
+      context: ./server/db/
       dockerfile: db.Dockerfile
-    container_name: pharma-hub-db
-    volumes:
-      - pharma-dt:/var/lib/postgresql/data
+    container_name: gwa-db
     environment:
-      - POSTGRES_DB=${POSTGRES_DB}
-      - POSTGRES_USER=${POSTGRES_USER}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${DB_NAME:-gwa}
+      - POSTGRES_USER=${DB_OWNER_ADMIN:-gwa_admin}
+      - POSTGRES_PASSWORD=${DB_OWNER_PWORD:-gwa_password}
+      # Pass these variables explicitly for the init script
+      - DB_NAME=${DB_NAME:-gwa}
+      - DB_OWNER_ADMIN=${DB_OWNER_ADMIN:-gwa_admin}
+      - DB_OWNER_PWORD=${DB_OWNER_PWORD:-gwa_password}
+      - TZ=UTC
     ports:
-      - "5432:5432"  # Map host port 5432 to container port 5432
+      - "5432:5432"
     networks:
-      - pharma-net
+      - gwa-network
+    # healthcheck:
+    #   test: ["CMD-SHELL", "pg_isready -U ${DB_OWNER_ADMIN:-gwa_admin} -d ${DB_NAME:-gwa}"]
+    #   interval: 10s
+    #   timeout: 5s
+    #   retries: 5
+    #   start_period: 10s
+
+  gwa-api:
+    build:
+      context: ./server/api/
+      dockerfile: api.Dockerfile
+    container_name: gwa-api
+    environment:
+      - DB_NAME=${DB_NAME:-gwa}
+      - DB_HOST=gwa-db
+      - DB_OWNER_ADMIN=${DB_OWNER_ADMIN:-gwa_admin}
+      - DB_OWNER_PWORD=${DB_OWNER_PWORD:-gwa_password}
+      - PYTHONDONTWRITEBYTECODE=1
+      - PYTHONUNBUFFERED=1
+    ports:
+      - "8000:8000"
+    depends_on:
+      - gwa-db
+    networks:
+      - gwa-network
+    # healthcheck:
+    #   test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+    #   interval: 30s
+    #   timeout: 10s
+    #   retries: 3
+    #   start_period: 10s
 
 networks:
-  pharma-net:
-    name: pharma-net
+  gwa-network:
+    name: gwa-network
+    driver: bridge
 
-
-# * Uncomment the following section if you want to persist the database data
 volumes:
-  pharma-dt:
-    name: pharma-dt
+  postgres_data:
+    name: gwa-postgres-data

@@ -9,12 +9,8 @@
 docker build -t gwa/db:pgsql -f ./server/db/db.Dockerfile ./server/db
 # add --no-cache to rebuild from scratch
 docker run --env-file ./.env gwa/db:pgsql  # Run container in foreground
-
 # * Run in background w/ a name (gwa-db)
 docker run --env-file ./.env --rm -d --name gwa-db gwa/db:pgsql
-
-# Using docker-compose (recommended)
-docker-compose up db
 ```
 
 #### DB Management
@@ -36,11 +32,10 @@ docker exec -it gwa-db psql -U $DB_OWNER_ADMIN -d $DB_NAME
 
 ```bash
 # Build and run API container individually
-docker build -t api-image -f ./server/api/api.Dockerfile ./server/api
-docker run --env-file ./.env api-image
-
-# Using docker-compose (recommended)
-docker-compose up api
+docker build -t gwa/api -f ./server/api/api.Dockerfile ./server/api
+docker run --env-file ./.env gwa/api  # Run container in foreground
+# * Run in background w/ a name (gwa-api)
+docker run --env-file ./.env --rm -d --name gwa-api gwa/api     
 ```
 
 ### Frontend
@@ -50,13 +45,16 @@ docker-compose up api
 docker build -t frontend-image -f ./frontend/Dockerfile ./frontend
 docker run -p 5173:5173 frontend-image
 
-# Using docker-compose (recommended)
-docker-compose up frontend
 ```
 
-## Full Stack Development
+## Compose
 
 ```bash
+# Using docker-compose (recommended)
+docker-compose up gwa-db  # Start the database
+docker-compose up gwa-api  # Start the API (depends on the database)
+docker-compose up frontend  # Start the frontend (depends on the API)
+
 # Start all services
 docker-compose up
 
@@ -71,30 +69,4 @@ docker-compose down
 
 # Rebuild containers
 docker-compose up --build
-```
-
-----
-----
-----
-
-## Useful Docker Commands
-
-```bash
-# List all containers
-docker ps -a
-
-# List all images
-docker images
-
-# Remove all stopped containers
-docker container prune
-
-# Remove all unused images
-docker image prune
-
-# Remove all unused volumes
-docker volume prune
-
-# Clean up everything
-docker system prune -a --volumes
 ```

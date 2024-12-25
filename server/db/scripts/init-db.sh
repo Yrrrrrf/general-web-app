@@ -16,17 +16,6 @@ CROSS="✗"
 ARROW="→"
 BULLET="•"
 
-
-# Ensure database exists
-ensure_database() {
-    echo -e "${BLUE}${ARROW} Ensuring database exists${NC}"
-    psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "postgres" <<-EOSQL
-        SELECT 'CREATE DATABASE $POSTGRES_DB'
-        WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = '$POSTGRES_DB')\gexec
-EOSQL
-    echo -e "\t${GREEN}${CHECK} Database check completed${NC}"
-}
-
 # Find and sort directories numerically
 get_ordered_directories() {
     local base_dir="/init"
@@ -59,11 +48,21 @@ execute_sql_file() {
     fi
 }
 
+# Ensure database exists
+ensure_database() {
+    echo -e "${BLUE}${ARROW} Ensuring database exists${NC}"
+    psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "postgres" <<-EOSQL
+        SELECT 'CREATE DATABASE $DB_NAME'
+        WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = '$DB_NAME')\gexec
+EOSQL
+    echo -e "\t${GREEN}${CHECK} Database check completed${NC}"
+}
+
 # Function to modify database settings
 modify_database_settings() {
     echo -e "${BLUE}${ARROW} Modifying database settings...${NC}"
     
-    # First, create new user and modify database from template1 (which we're not connected to)
+    # First, create new user and modify database from template1
     psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "template1" <<-EOSQL
         -- Create new user if it doesn't exist
         DO \$\$ 
@@ -78,24 +77,37 @@ modify_database_settings() {
         ALTER USER "$DB_OWNER_ADMIN" WITH PASSWORD '$DB_OWNER_PWORD' CREATEROLE;
 EOSQL
 
-    # Now handle database renaming - first disconnect all users from the database
-    psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "template1" <<-EOSQL
-        -- Disconnect all users from the database we want to rename
-        SELECT pg_terminate_backend(pid) 
-        FROM pg_stat_activity 
-        WHERE datname = '$POSTGRES_DB' 
-        AND pid != pg_backend_pid();
+    # Check if we need to rename the database
+    if [ "$POSTGRES_DB" != "$DB_NAME" ]; then
+        echo -e "${BLUE}${ARROW} Renaming database from $POSTGRES_DB to $DB_NAME${NC}"
+        
+        # Disconnect all users from the database
+        psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "template1" <<-EOSQL
+            SELECT pg_terminate_backend(pid) 
+            FROM pg_stat_activity 
+            WHERE datname = '$POSTGRES_DB' 
+            AND pid != pg_backend_pid();
 EOSQL
 
-    # Sleep briefly to ensure connections are closed
-    sleep 1
+        # Sleep briefly to ensure connections are closed
+        sleep 1
 
-    # Now rename the database and set permissions
+        # Rename the database only if names are different
+        psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "template1" <<-EOSQL
+            -- Rename the database only if it exists with the old name
+            DO \$\$
+            BEGIN
+                IF EXISTS (SELECT FROM pg_database WHERE datname = '$POSTGRES_DB') 
+                   AND NOT EXISTS (SELECT FROM pg_database WHERE datname = '$DB_NAME') THEN
+                    EXECUTE 'ALTER DATABASE "$POSTGRES_DB" RENAME TO "$DB_NAME"';
+                END IF;
+            END \$\$;
+EOSQL
+    fi
+
+    # Set permissions regardless of whether we renamed
     psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "template1" <<-EOSQL
-        -- Rename the database
-        ALTER DATABASE "$POSTGRES_DB" RENAME TO "$DB_NAME";
-        
-        -- Grant privileges on the renamed database
+        -- Grant privileges on the database
         GRANT ALL PRIVILEGES ON DATABASE "$DB_NAME" TO "$DB_OWNER_ADMIN";
         ALTER DATABASE "$DB_NAME" OWNER TO "$DB_OWNER_ADMIN";
 
