@@ -50,8 +50,13 @@ docker run --env-file ./.env `
 
 ```bash
 # Build and run Frontend container individually
-docker build -t frontend-image -f ./frontend/Dockerfile ./frontend
-docker run -p 5173:5173 frontend-image
+docker build -t gwa/hub -f ./core/hub.Dockerfile ./core
+docker run -p 5173:5173  # Run container in foreground
+# * Run in background w/ a name (gwa-hub)
+docker run --rm -d --name gwa-hub gwa/hub
+
+# Run with bind mount for hot reload
+docker run --rm -d --name gwa-hub -v "${PWD}/core:/app" -p 5173:5173 gwa/hub
 
 ```
 
