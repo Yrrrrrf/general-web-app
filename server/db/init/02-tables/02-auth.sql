@@ -24,7 +24,7 @@ CREATE TABLE IF NOT EXISTS auth.sessions (
     user_id UUID NOT NULL REFERENCES account.profile(id) ON DELETE CASCADE,
     token TEXT UNIQUE NOT NULL,
     expires_at TIMESTAMP WITH TIME ZONE NOT NULL,
-    ip_address INET,
+    -- ip_address INET,
     user_agent TEXT,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     last_active_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
@@ -34,7 +34,7 @@ CREATE TABLE IF NOT EXISTS auth.sessions (
 CREATE TABLE IF NOT EXISTS auth.login_attempts (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     username_or_email VARCHAR(255) NOT NULL,
-    ip_address INET,
+    -- ip_address INET,
     success BOOLEAN NOT NULL,
     attempt_time TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );

@@ -36,6 +36,14 @@ docker build -t gwa/api -f ./server/api/api.Dockerfile ./server/api
 docker run --env-file ./.env gwa/api  # Run container in foreground
 # * Run in background w/ a name (gwa-api)
 docker run --env-file ./.env --rm -d --name gwa-api gwa/api     
+
+# Run with bind mount for hot reload
+docker run --env-file ./.env `
+  --rm -d `  # Remove container when stopped (in detached mode)
+  --name gwa-api `  # Name the container (gwa-api)
+  -v "${PWD}/server/api:/app" `  # Bind mount the ./server/api directory to /app
+  -p 8000:8000 `  # Expose port 8000
+  gwa/api  # Use the gwa/api image
 ```
 
 ### Frontend

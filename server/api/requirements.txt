@@ -3,7 +3,7 @@ uvicorn==0.34.0
 
 # API
 fastapi==0.115.6
-api-forge==0.0.5
+api-forge==0.0.6
 
 # Testing
 requests==2.32.3

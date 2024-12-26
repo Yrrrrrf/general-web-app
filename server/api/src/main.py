@@ -26,9 +26,10 @@ db_manager = DBForge(config=DBConfig(
     db_type=os.getenv('DB_TYPE', 'postgresql'),
     driver_type=os.getenv('DRIVER_TYPE', 'sync'),
     database=os.getenv('DB_NAME', 'gwa'),
-    user=os.getenv('DB_USER', 'gwa_admin'),
-    password=os.getenv('DB_PASSWORD', 'gwa_password'),
+    user=os.getenv('DB_USER', 'gwa_owner'),
+    password=os.getenv('DB_PASSWORD', 'password'),
     host=os.getenv('DB_HOST', 'localhost'),
+    # host=os.getenv('DB_HOST', 'host.docker.internal'),
     port=os.getenv('DB_PORT', 5432),
     echo=False,
     pool_config=PoolConfig(

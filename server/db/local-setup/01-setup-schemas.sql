@@ -1,15 +1,3 @@
--- File: 00-setup-schemas.sql
---     Sets up schemas and roles for the Pharmacy Management System.
---
--- # Purpose:
---     This file defines the schema structure for a comprehensive pharmacy management system.
---     It creates separate schemas to organize different aspects of the pharmacy operations,
---     promoting modularity, security, and easier management of the application's data.
---
--- # Note:
---     This version uses hardcoded values for local development.
---     Ensure this script is run by a user with sufficient privileges to create schemas and roles.
-
 -- Enable psql command echoing and stop on error
 \set ON_ERROR_STOP on
 \set ECHO all
@@ -27,21 +15,55 @@ BEGIN
     END LOOP;
 END $$;
 
--- Function to create schemas
+-- File: 01_schema_setup.sql
+-- # Script steps:
+--     1. Creates specified schemas with a logical structure
+--     2. Creates roles with appropriate permissions
+--     3. Establishes cross-schema access where necessary
+--
+-- # Note:
+--     Ensure this script is run by a user with sufficient privileges to create schemas and roles.
+
+-- Enable psql command echoing and stop on error
+\set ON_ERROR_STOP on
+\set ECHO all
+
+-- ^ Enable necessary extensions in the database
+--    These extensions provide additional functionality for data management and analysis.
+DO $$
+DECLARE
+    ext TEXT;  -- Extension name
+    extensions TEXT[] := ARRAY[  -- List of extensions to enable
+        'uuid-ossp',  -- generate universally unique identifiers (UUIDs)
+        'pgcrypto',   -- cryptographic functions
+        'pg_trgm'     -- trigram matching for similarity search
+    ];
+BEGIN
+    FOREACH ext IN ARRAY extensions
+    LOOP
+        EXECUTE format('CREATE EXTENSION IF NOT EXISTS %I', ext);
+        RAISE NOTICE 'Extension % enabled', ext;
+    END LOOP;
+END $$;
+
+-- Create the corrected function that explicitly uses the current database
 CREATE OR REPLACE FUNCTION create_schemas(schema_names TEXT[])
 RETURNS VOID AS $$
 DECLARE
     schema_name TEXT;
+    current_db TEXT;
 BEGIN
+    SELECT current_database() INTO current_db;
     FOREACH schema_name IN ARRAY schema_names
     LOOP
+        -- Create schema in the current database explicitly
         EXECUTE format('CREATE SCHEMA IF NOT EXISTS %I', schema_name);
-        RAISE NOTICE 'Schema % created or already exists', schema_name;
+        RAISE NOTICE 'Schema % created or already exists in database %', schema_name, current_db;
     END LOOP;
 END;
 $$ LANGUAGE plpgsql;
 
--- Function to create role and grant privileges
+-- ^ Function to create role and grant privileges
 CREATE OR REPLACE FUNCTION create_and_grant_role(
     role_name TEXT,
     role_password TEXT,
@@ -60,7 +82,7 @@ BEGIN
         RAISE NOTICE 'Password updated for existing role %', role_name;
     END IF;
 
-    -- Grant full privileges on primary schemas
+    -- Grant full privileges on primary schemas (for data management)
     FOREACH schema_name IN ARRAY primary_schemas
     LOOP
         EXECUTE format('GRANT ALL PRIVILEGES ON SCHEMA %I TO %I', schema_name, role_name);
@@ -70,7 +92,7 @@ BEGIN
         EXECUTE format('ALTER DEFAULT PRIVILEGES IN SCHEMA %I GRANT ALL PRIVILEGES ON SEQUENCES TO %I', schema_name, role_name);
     END LOOP;
 
-    -- Grant read privileges on specified schemas
+    -- Grant read privileges on specified schemas (for cross-schema access)
     FOREACH schema_name IN ARRAY read_schemas
     LOOP
         EXECUTE format('GRANT USAGE ON SCHEMA %I TO %I', schema_name, role_name);
@@ -82,45 +104,21 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+\c gwa
 
 -- Create schemas
-DO $$
-BEGIN
-  RAISE NOTICE 'Starting schema creation...';
-  PERFORM create_schemas(ARRAY[
+SELECT create_schemas(ARRAY[
     -- * main schemas
-    'pharma',       -- For pharmaceutical-specific information
-    'management',    -- For managing stock levels and product information
-
-    -- * aux schemas
-    'customer',     -- For managing customer profiles and histories
+    'account',        -- For user information and roles
     'auth'         -- For user authentication and authorization
-  ]);
-  RAISE NOTICE 'Schema creation completed.';
-EXCEPTION WHEN OTHERS THEN
-  RAISE NOTICE 'Error creating schemas: %', SQLERRM;
-  RAISE;
-END $$;
+    -- * additional schemas
+    -- todo: Add some really cool schemas here...
+]);
 
 -- * Create roles and grant privileges for each schema
--- * Note: Change the passwords and schema access as needed
 SELECT create_and_grant_role(
-    'some_admin',
-    'some_password',
-    ARRAY['pharma', 'management', 'customer'],
+    'director',
+    'secure_director_pwd',
+    ARRAY['account'],
     ARRAY['auth']
 );
-
--- SELECT create_and_grant_role(
---     'sales_admin',
---     'sales_password',
---     ARRAY['sales']
---     ARRAY['pharma', 'inventory', 'customer']
--- );
-
--- SELECT create_and_grant_role(
---     'pharma_admin',
---     'pharma_password',
---     ARRAY['pharma'],
---     ARRAY['inventory', 'sales']
--- );
