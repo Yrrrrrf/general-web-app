@@ -27,6 +27,8 @@
 	"dependencies": {
 		"@tailwindcss/container-queries": "^0.1.1",
 		"@tailwindcss/forms": "^0.5.9",
-		"@tailwindcss/typography": "^0.5.15"
+		"@tailwindcss/typography": "^0.5.15",
+		"ts-forge": "file:../../../typescript/ts-forge/ts-forge",
+		"rune-lab": "file:../../rune-lab"
 	}
 }
