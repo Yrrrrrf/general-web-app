@@ -3,7 +3,9 @@ import containerQueries from '@tailwindcss/container-queries';
 import forms from '@tailwindcss/forms';
 import typography from '@tailwindcss/typography';
 import type { Config } from 'tailwindcss';
+import daisyui from 'daisyui';
 
+// console.log('Tailwind config processing at:', new Date().toISOString());
 
 export default {
   content: ['./src/**/*.{html,js,svelte,ts}'],
@@ -16,20 +18,19 @@ export default {
     typography, 
     forms, 
     containerQueries,
-    require('daisyui')
+    daisyui
   ],
 
   daisyui: {
+    // themes: [...availableThemes, customThemes],
     themes: [
-      // themes: [...availableThemes, customThemes],
       'light', // first one is the default theme
       'dark'
     ],
-    styled: true,
-    utils: true,
-    logs: true,
-    base: true,
-    prefix: '',
-    darkTheme: 'dark'
+    // styled: true,  // component styling
+    // utils: true,  // util classes (bg-red-100, text-center, etc)
+    // logs: true,  // log info to console
+    // base: true,  // base components (button, input, etc)
+    // prefix: '',  // set a prefix for all daisyUI classes
   }
 } satisfies Config;

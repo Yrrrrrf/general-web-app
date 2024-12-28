@@ -1,24 +1,10 @@
 <script lang="ts">
-  // import { gwaStore, closeModal } from 'rune-lab';
-  // import { someFn } from '@rune-lab';
-
-  // import { app_dt, forge_init } from 'ts-forge';
-  import { init_lab } from 'rune-lab';
   import { UIShowcase } from 'rune-lab';
 
+  import { init_forge } from 'ts-forge';
 
-  let activeTab = $state(0);
-  let progress = $state(0);
+  import { app } from 'rune-lab';
 
-    // Progress bar simulation
-  setInterval(() => {
-    progress = (progress < 100 ? progress + 1 : 0);
-  }, 100);
-
-  $effect(() => {
-    // document.documentElement.setAttribute('data-theme', 
-    // gwaStore.darkMode ? 'dark' : 'light');
-  });
 </script>
 
 <UIShowcase initialCount={5} />
@@ -33,19 +19,10 @@
   </div>
 <!--  -->
 
-  <!-- add a button that exec someFN -->
-  <!-- <button onclick={() => forge_init()}>Click me</button> -->
-  <!-- <button onclick={() => app_dt("")}>Click me</button> -->
-  <button onclick={() => init_lab()}>Click me</button>
-
-<!--  -->
-  <div class="tabs">
-      <button class="tab tab-lifted" class:active={activeTab === 0} onclick={() => activeTab = 0}>
-          <span>Notifications</span>
-      </button>
-      <button class="tab tab-lifted" class:active={activeTab === 1} onclick={() => activeTab = 1}>
-          <span>Modal</span>
-      </button>
-  </div>
+  <!-- <button onclick={() => init_lab()}>RUNE-LAB</button> -->
+  <button onclick={() => init_forge()}>TS-FORGE</button>
 
 </div>
+
+<h1>{$app.name} v{$app.version}</h1>
+<p>By {$app.author}</p>
