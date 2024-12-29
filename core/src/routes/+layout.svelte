@@ -2,20 +2,29 @@
 	import '../app.css';
 	let { children } = $props();
 
-    import { app } from 'rune-lab';
+    import { 
+        appData,
+        // ThemeSelector,
+        themeStore
+     } from 'rune-lab';
 
-    // Initialize the store
-    app.init({
+    // Initialize app data
+    appData.init({
         name: 'GWA',
-        version: '0.1.0',
+        version: 'v0.1.0',
         author: 'Fernando Bryan Reza Campos'
     });
 
+    // Initialize theme system
+    // In the user's app
+
+    themeStore.init();
 </script>
 
 <svelte:head>
-    <title>{$app.name}</title>
-    <meta name="application-name" content={$app.name} />
+    <title>{appData.name}</title>
+    <meta name="application-name" content={appData.name} />
+    <meta name="author" content={appData.author} />
 </svelte:head>
 
 {@render children()}
