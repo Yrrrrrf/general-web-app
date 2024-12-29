@@ -14,7 +14,6 @@ CREATE TABLE IF NOT EXISTS account.profile (
     email VARCHAR(255) UNIQUE NOT NULL,
     full_name VARCHAR(100),
     status VARCHAR(20) DEFAULT 'active' CHECK (status IN ('active', 'inactive', 'suspended')),
-    metadata JSONB DEFAULT '{}',  -- Flexible field for additional profile data
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );

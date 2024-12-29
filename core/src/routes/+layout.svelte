@@ -1,30 +1,51 @@
+<!-- src/routes/+layout.svelte -->
 <script lang="ts">
-	import '../app.css';
-	let { children } = $props();
+    import '../app.css';
+    let { children } = $props();
 
-    import { 
-        appData,
-        // ThemeSelector,
-        themeStore
-     } from 'rune-lab';
+    import { onMount } from 'svelte';
+    import { appData, apiStore } from 'rune-lab';
+    import { Footer, UrlDisplay, NavBar } from 'rune-lab';
 
-    // Initialize app data
-    appData.init({
-        name: 'GWA',
-        version: 'v0.1.0',
-        author: 'Fernando Bryan Reza Campos'
+    onMount(() => {  // Initialize main app data
+        appData.init({  // Initialize app data
+            name: 'GWA',
+            version: 'v0.1.0',
+            description: 'General Web Application Template',
+            author: 'Yrrrrrf <fer.rezac@outlook.com>'
+        });
+
+        apiStore.init({  // Initialize API configuration
+            // URL: import.meta.env.VITE_API_URL || 'http://localhost:8000',
+            URL: 'http://localhost:8000',
+            VERSION: 'v1',
+            TIMEOUT: 30000
+        });
     });
 
-    // Initialize theme system
-    // In the user's app
-
-    themeStore.init();
+    // Meta tags derived from app data
+    const metaTags = $derived([
+        { name: 'application-name', content: appData.name },
+        { name: 'author', content: appData.author },
+        { name: 'description', content: appData.description },
+    ]);
 </script>
 
 <svelte:head>
     <title>{appData.name}</title>
-    <meta name="application-name" content={appData.name} />
-    <meta name="author" content={appData.author} />
+    {#each metaTags as meta}
+        <meta name={meta.name} content={meta.content} />
+    {/each}
 </svelte:head>
 
-{@render children()}
+<NavBar />
+
+<div class="min-h-screen flex flex-col">
+    <main class="flex-grow">
+        {@render children()}
+    </main>
+
+    <Footer />
+</div>
+
+<UrlDisplay />
